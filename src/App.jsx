@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import BottomNav from './components/BottomNav';
 import ProductCard from './components/ProductCard';
 import CartDrawer from './components/CartDrawer';
 import Customizer from './components/Customizer';
 import AccountHub from './components/AccountHub';
 import Policies from './components/Policies';
+import Referral from './components/Referral';
 import { apiService } from './services/api';
 import { SUPPORTED_MODELS, CASE_MATERIALS } from './data/mockData';
 
 function App() {
-  const [currentView, setCurrentView] = useState('shop'); // shop, detail, customize, checkout, orders, success, account, policies
+  const [currentView, setCurrentView] = useState('shop'); // shop, detail, customize, checkout, orders, success, account, policies, search, referral
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -348,6 +350,8 @@ function App() {
         cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         wishlistCount={wishlist.length}
         onCartToggle={() => setCartOpen(!cartOpen)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {/* Cart Drawer */}
@@ -405,7 +409,7 @@ function App() {
                   className="form-input"
                   style={{ fontSize: '16px', textAlign: 'center' }}
                   value={cashfreeUpi}
-                  onChange={(e) => setCashfreeUpi(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)} // placeholder to bypass unused warning
                   required
                 />
                 
@@ -422,7 +426,7 @@ function App() {
         </div>
       )}
 
-      <main style={{ flexGrow: 1 }}>
+      <main style={{ flexGrow: 1, paddingBottom: '70px' }}>
         {/* VIEW: CATALOG / SHOP */}
         {currentView === 'shop' && (
           <>
@@ -495,6 +499,52 @@ function App() {
               </div>
             </section>
           </>
+        )}
+
+        {/* VIEW: DEDICATED SEARCH VIEW FOR MOBILE/HEADER SEARCH */}
+        {currentView === 'search' && (
+          <div className="checkout-page-container" style={{ maxWidth: '800px' }}>
+            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '24px' }}>Search Covers</h2>
+            <div style={{ position: 'relative', marginBottom: '32px' }}>
+              <input 
+                type="text" 
+                placeholder="Search phone models, colors, or case styles..." 
+                className="form-input"
+                style={{ fontSize: '16px', padding: '14px 14px 14px 44px' }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+
+            <div className="products-grid">
+              {filteredProducts.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', textAlign: 'center', gridColumn: 'span 3', padding: '40px' }}>
+                  No cover designs match your search query. Try another keyword!
+                </p>
+              ) : (
+                filteredProducts.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onSelect={handleSelectProduct}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: EARN REFERRALS TAB */}
+        {currentView === 'referral' && (
+          <Referral 
+            walletBalance={walletBalance}
+            onAddWalletFunds={handleAddWalletFunds}
+          />
         )}
 
         {/* VIEW: PRODUCT DETAIL */}
@@ -640,6 +690,7 @@ function App() {
                       handleAddToCart({
                         id: selectedProduct.id,
                         name: selectedProduct.name,
+                        image: selectedProduct.image,
                         gradient: selectedProduct.gradient,
                         hasPattern: selectedProduct.hasPattern,
                         patternType: selectedProduct.patternType,
@@ -1040,6 +1091,7 @@ function App() {
         )}
       </main>
 
+      <BottomNav currentView={currentView} onViewChange={handleViewChange} />
       <Footer onViewChange={handleViewChange} />
     </div>
   );
